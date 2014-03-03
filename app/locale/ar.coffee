@@ -1,36 +1,36 @@
-module.exports = nativeDescription: "العربية", englishDescription: "Arabic", translation:
+﻿module.exports = nativeDescription: "العربية", englishDescription: "Arabic", translation:
   common:
-    loading: "Loading..."
-#    saving: "Saving..."
-#    sending: "Sending..."
-#    cancel: "Cancel"
-#    save: "Save"
-#    delay_1_sec: "1 second"
-#    delay_3_sec: "3 seconds"
-#    delay_5_sec: "5 seconds"
-#    manual: "Manual"
-#    fork: "Fork"
-#    play: "Play"
+    loading: "...التحميل"
+    saving: "...التسجيل"
+    sending: "...الإرسال"
+    cancel: "إلغاء"
+    save: "سجل"
+    delay_1_sec: "1 ثانية"
+    delay_3_sec: "3 ثواني"
+    delay_5_sec: "5 ثواني"
+    manual: "يدوي"
+    fork: "تفرع"
+    play: "إلعب"
 
 #  modal:
-#    close: "Close"
-#    okay: "Okay"
+    close: "إغلاق"
+    okay: "نعم"
 
 #  not_found:
-#    page_not_found: "Page not found"
+    page_not_found: "الصفحة غير موجودة"
 
 #  nav:
-#    play: "Levels"
-#    editor: "Editor"
-#    blog: "Blog"
-#    forum: "Forum"
-#    admin: "Admin"
-#    home: "Home"
-#    contribute: "Contribute"
-#    legal: "Legal"
-#    about: "About"
-#    contact: "Contact"
-#    twitter_follow: "Follow"
+    play: "المستوى"
+    editor: "المحرر"
+    blog: "المدونة"
+    forum: "المنتدى"
+    admin: "المدير"
+    home: "الإستقبال"
+    contribute: "المساهمة"
+    legal: "قانوني"
+    about: "بشأن"
+    contact: "اتصال"
+    twitter_follow: "تابع على التويتر"
 #    employers: "Employers"
 
 #  versions:
@@ -158,7 +158,7 @@ module.exports = nativeDescription: "العربية", englishDescription: "Arabi
 #    gravatar_profile_link: "Full Gravatar Profile"
 
 #  play_level:
-#    level_load_error: "Level could not be loaded."
+#    level_load_error: "Level could not be loaded: "
 #    done: "Done"
 #    grid: "Grid"
 #    customize_wizard: "Customize Wizard"
