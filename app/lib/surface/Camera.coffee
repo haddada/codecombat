@@ -40,6 +40,9 @@ module.exports = class Camera extends CocoClass
     'camera-zoom-out': 'onZoomOut'
     'surface:mouse-scrolled': 'onMouseScrolled'
     'level:restarted': 'onLevelRestarted'
+    'sprite:mouse-down': 'onMouseDown'
+    'sprite:dragged': 'onMouseDragged'
+    'camera-zoom-to': 'onZoomTo'
 
   # TODO: Fix tests to not use mainLayer
   constructor: (@canvasWidth, @canvasHeight, angle=Math.asin(0.75), hFOV=d2r(30)) ->
@@ -164,6 +167,21 @@ module.exports = class Camera extends CocoClass
       target = @target
     @zoomTo target, newZoom, 0
 
+  onMouseDown: (e) ->
+    return if @dragDisabled
+    @lastPos = {x: e.originalEvent.rawX, y: e.originalEvent.rawY}
+
+  onMouseDragged: (e) ->
+    return if @dragDisabled
+    target = @boundTarget(@target, @zoom)
+    newPos = {
+      x: target.x + (@lastPos.x - e.originalEvent.rawX) / @zoom
+      y: target.y + (@lastPos.y - e.originalEvent.rawY) / @zoom
+    }
+    @zoomTo newPos, @zoom, 0
+    @lastPos = {x: e.originalEvent.rawX, y: e.originalEvent.rawY}
+    Backbone.Mediator.publish 'camera:dragged'
+
   onLevelRestarted: ->
     @setBounds(@firstBounds, false)
 
@@ -203,7 +221,7 @@ module.exports = class Camera extends CocoClass
     newTarget ?= {x:0, y:0}
     newTarget = (@newTarget or @target) if @locked
     newZoom = Math.min((Math.max @minZoom, newZoom), MAX_ZOOM)
-    
+
     thangType = @target?.sprite?.thangType
     if thangType
       @offset = _.clone(thangType.get('positions')?.torso or {x: 0, y:0})
@@ -212,7 +230,7 @@ module.exports = class Camera extends CocoClass
       @offset.y *= scale
     else
       @offset = {x: 0, y:0}
-      
+
     return if @zoom is newZoom and newTarget is newTarget.x and newTarget.y is newTarget.y
 
     @finishTween(true)
@@ -230,7 +248,7 @@ module.exports = class Camera extends CocoClass
       @target = newTarget
       @zoom = newZoom
       @updateZoom true
-      
+
   focusedOnSprite: ->
     return @target?.name
 
@@ -291,3 +309,6 @@ module.exports = class Camera extends CocoClass
     createjs.Tween.removeTweens @
     @finishTween = null
     super()
+
+  onZoomTo: (pos, time) ->
+    @zoomTo(@worldToSurface(pos), @zoom, time)

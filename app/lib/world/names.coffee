@@ -44,6 +44,7 @@ module.exports.thangNames = thangNames =
     "Huburt"
     "Sterling"
     "Alistair"
+    "Cid"
     "Remy"
     "Stormy"
     "Halle"
@@ -78,6 +79,7 @@ module.exports.thangNames = thangNames =
     "Giselle"
     "Bernadette"
     "Hershell"
+    "Gawain"
   ]
   "Archer F": [
     "Phoebe"
@@ -136,6 +138,8 @@ module.exports.thangNames = thangNames =
     "Iyert"
     "Palt"
     "Shmeal"
+    "Gurzunn"
+    "Yugark"
   ]
   "Ogre M": [
     "Krogg"
@@ -146,11 +150,14 @@ module.exports.thangNames = thangNames =
     "Mak Fod"
     "Trung"
     "Axe Ox"
+    "Vargutt"
   ]
   "Ogre F": [
     "Nareng"
     "Morthrug"
     "Glonc"
+    "Marghurk"
+    
   ]
   "Ogre Brawler": [
     "Grul'thock"
@@ -164,6 +171,7 @@ module.exports.thangNames = thangNames =
     "Zeredd"
     "Borgag"
     "Grognar"
+    "Ironjaw"
   ]
   "Ogre Fangrider": [
     "Dreek"

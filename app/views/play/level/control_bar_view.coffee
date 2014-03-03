@@ -47,12 +47,17 @@ module.exports = class ControlBarView extends View
     text += " (#{numPlayers})" if numPlayers > 1
     $('#multiplayer-button', @$el).text(text)
 
-  getRenderData: (context={}) ->
-    super context
-    context.worldName = @worldName
-    context.multiplayerEnabled = @session.get('multiplayer')
-    context.ladderGame = @ladderGame
-    context
+  getRenderData: (c={}) ->
+    super c
+    c.worldName = @worldName
+    c.multiplayerEnabled = @session.get('multiplayer')
+    c.ladderGame = @ladderGame
+    c.homeLink = "/"
+    levelID = @level.get('slug')
+    if levelID in ["brawlwood", "brawlwood-tutorial"]
+      levelID = 'brawlwood' if levelID is 'brawlwood-tutorial'
+      c.homeLink = "/play/ladder/" + levelID
+    c
 
   showGuideModal: ->
     options = {docs: @level.get('documentation'), supermodel: @supermodel}

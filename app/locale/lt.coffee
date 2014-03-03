@@ -1,4 +1,4 @@
-module.exports = nativeDescription: "English (AU)", englishDescription: "English (AU)", translation:
+module.exports = nativeDescription: "lietuvių kalba", englishDescription: "Lithuanian", translation:
   common:
     loading: "Loading..."
 #    saving: "Saving..."
@@ -158,7 +158,7 @@ module.exports = nativeDescription: "English (AU)", englishDescription: "English
 #    gravatar_profile_link: "Full Gravatar Profile"
 
 #  play_level:
-#    level_load_error: "Level could not be loaded."
+#    level_load_error: "Level could not be loaded: "
 #    done: "Done"
 #    grid: "Grid"
 #    customize_wizard: "Customize Wizard"

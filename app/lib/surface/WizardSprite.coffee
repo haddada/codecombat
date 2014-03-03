@@ -22,9 +22,15 @@ module.exports = class WizardSprite extends IndieSprite
     'echo-self-wizard-sprite': 'onEchoSelfWizardSprite'
     'echo-all-wizard-sprites': 'onEchoAllWizardSprites'
 
+  shortcuts:
+    'up': 'onMoveKey'
+    'down': 'onMoveKey'
+    'left': 'onMoveKey'
+    'right': 'onMoveKey'
+
   constructor: (thangType, options) ->
     if options?.isSelf
-      options.colorConfig = me.get('wizard')?.colorConfig or {}
+      options.colorConfig = _.cloneDeep(me.get('wizard')?.colorConfig) or {}
     super thangType, options
     @isSelf = options.isSelf
     @targetPos = @thang.pos
@@ -37,7 +43,7 @@ module.exports = class WizardSprite extends IndieSprite
   makeIndieThang: (thangType, thangID, pos) ->
     thang = super thangType, thangID, pos
     thang.isSelectable = false
-    thang.bobHeight = 1.5
+    thang.bobHeight = 0.75
     thang.bobTime = 2
     thang.pos.z += thang.bobHeight
     thang
@@ -59,7 +65,12 @@ module.exports = class WizardSprite extends IndieSprite
   onMeSynced: (e) ->
     return unless @isSelf
     @setNameLabel me.displayName() if @displayObject.visible  # not if we hid the wiz
-    @setColorHue me.get('wizardColor1')
+    newColorConfig = me.get('wizard')?.colorConfig or {}
+    shouldUpdate = not _.isEqual(newColorConfig, @options.colorConfig)
+    @options.colorConfig = _.cloneDeep(newColorConfig)
+    if shouldUpdate
+      @setupSprite()
+      @playAction(@currentAction)
 
   onSpriteSelected: (e) ->
     return unless @isSelf
@@ -97,7 +108,7 @@ module.exports = class WizardSprite extends IndieSprite
   defaultPos: -> x: 35, y: 24, z: @thang.depth / 2 + @thang.bobHeight
   move: (pos, duration) -> @setTarget(pos, duration)
 
-  setTarget: (newTarget, duration) ->
+  setTarget: (newTarget, duration, isLinear=false) ->
     # ignore targets you're already heading for
     targetPos = @getPosFromTarget(newTarget)
     return if @targetPos and @targetPos.x is targetPos.x and @targetPos.y is targetPos.y
@@ -110,7 +121,7 @@ module.exports = class WizardSprite extends IndieSprite
     @shoveOtherWizards(true) if @targetSprite
     @targetSprite = if isSprite then newTarget else null
     @targetPos = targetPos
-    @beginMoveTween(duration)
+    @beginMoveTween(duration, isLinear)
     @shoveOtherWizards()
     Backbone.Mediator.publish('self-wizard:target-changed', {sender:@}) if @isSelf
 
@@ -122,7 +133,7 @@ module.exports = class WizardSprite extends IndieSprite
     return target if target.x?
     return target.thang.pos
 
-  beginMoveTween: (duration=1000) ->
+  beginMoveTween: (duration=1000, isLinear=false) ->
     # clear the old tween
     createjs.Tween.removeTweens(@)
 
@@ -135,8 +146,11 @@ module.exports = class WizardSprite extends IndieSprite
       @updatePosition()
       @endMoveTween()
       return
+    if isLinear
+      ease = createjs.Ease.linear
+    else
+      ease = createjs.Ease.getPowInOut(3.0)
 
-    ease = createjs.Ease.getPowInOut(3.0)
     createjs.Tween
       .get(@)
       .to({tweenPercentage:0.0}, duration, ease)
@@ -220,3 +234,22 @@ module.exports = class WizardSprite extends IndieSprite
 
   updateMarks: ->
     super() if @displayObject.visible  # not if we hid the wiz
+
+
+  onMoveKey: (e) ->
+    return unless @isSelf
+    e?.preventDefault()
+    yMovement = 0
+    xMovement = 0
+    yMovement += 2 if key.isPressed('up')
+    yMovement -= 2 if key.isPressed('down')
+    xMovement += 2 if key.isPressed('right')
+    xMovement -= 2 if key.isPressed('left')
+    @moveWizard xMovement, yMovement
+
+  moveWizard: (x, y) ->
+    interval = 500
+    position = {x: @targetPos.x + x, y: @targetPos.y + y}
+    @setTarget(position, interval, true)
+    @updatePosition()
+    Backbone.Mediator.publish 'camera-zoom-to', position, interval

@@ -22,8 +22,8 @@ module.exports = class RootView extends CocoView
     logoutUser($('#login-email').val())
 
   showWizardSettingsModal: ->
-    WizardSettingsView = require('views/modal/wizard_settings_modal')
-    subview = new WizardSettingsView {}
+    WizardSettingsModal = require('views/modal/wizard_settings_modal')
+    subview = new WizardSettingsModal {}
     @openModalView subview
 
   showLoading: ($el) ->
@@ -38,8 +38,15 @@ module.exports = class RootView extends CocoView
     location.hash = ''
     location.hash = hash
     @buildLanguages()
+    
+  afterRender: ->
+    super(arguments...)
+    @chooseTab(location.hash.replace('#','')) if location.hash
 
-    # TODO: automate tabs to put in hashes and navigate to them here
+  chooseTab: (category) ->
+    $("a[href='##{category}']", @$el).tab('show')
+
+  # TODO: automate tabs to put in hashes when they are clicked
 
   buildLanguages: ->
     $select = @$el.find(".language-dropdown").empty()

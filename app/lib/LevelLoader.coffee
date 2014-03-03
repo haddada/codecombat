@@ -36,8 +36,12 @@ module.exports = class LevelLoader extends CocoClass
 
   playJingle: ->
     return if @headless
-    jingles = ["ident_1", "ident_2"]
-    AudioPlayer.playInterfaceSound jingles[Math.floor Math.random() * jingles.length]
+    # Apparently the jingle, when it tries to play immediately during all this loading, you can't hear it.
+    # Add the timeout to fix this weird behavior.
+    f = ->
+      jingles = ["ident_1", "ident_2"]
+      AudioPlayer.playInterfaceSound jingles[Math.floor Math.random() * jingles.length]
+    setTimeout f, 500
 
   # Session Loading
 
@@ -93,11 +97,9 @@ module.exports = class LevelLoader extends CocoClass
     @supermodel.populateModel @level
 
   onSupermodelError: ->
-    msg = $.i18n.t('play_level.level_load_error',
-      defaultValue: "Level could not be loaded.")
-    $('body').append('<div class="alert">' + msg + '</div>')
 
   onSupermodelLoadedOne: (e) ->
+    @buildSpriteSheetsForThangType e.model if not @headless and e.model instanceof ThangType
     @update()
 
   # Things to do when either the Session or Supermodel load
@@ -113,17 +115,65 @@ module.exports = class LevelLoader extends CocoClass
     @updateCompleted = true
 
   denormalizeSession: ->
-    return if @session.get 'levelName'
+    return if @sessionDenormalized
     patch =
       'levelName': @level.get('name')
       'levelID': @level.get('slug') or @level.id
     if me.id is @session.get 'creator'
       patch.creatorName = me.get('name')
-
-    @session.set key, value for key, value of patch
-    tempSession = new LevelSession _id: @session.id
-    tempSession.save(patch, {patch: true})
+    for key, value of patch
+      if @session.get(key) is value
+        delete patch[key]
+    unless _.isEmpty patch
+      @session.set key, value for key, value of patch
+      tempSession = new LevelSession _id: @session.id
+      tempSession.save(patch, {patch: true})
     @sessionDenormalized = true
+
+  # Building sprite sheets
+
+  grabThangTypeTeams: ->
+    @grabTeamConfigs()
+    @thangTypeTeams = {}
+    for thang in @level.get('thangs')
+      for component in thang.components
+        if team = component.config?.team
+          @thangTypeTeams[thang.thangType] ?= []
+          @thangTypeTeams[thang.thangType].push team unless team in @thangTypeTeams[thang.thangType]
+          break
+    @thangTypeTeams
+
+  grabTeamConfigs: ->
+    for system in @level.get('systems')
+      if @teamConfigs = system.config?.teamConfigs
+        break
+    unless @teamConfigs
+      # Hack: pulled from Alliance System code. TODO: put in just one place.
+      @teamConfigs = {"humans":{"superteam":"humans","color":{"hue":0,"saturation":0.75,"lightness":0.5},"playable":true},"ogres":{"superteam":"ogres","color":{"hue":0.66,"saturation":0.75,"lightness":0.5},"playable":false},"neutral":{"superteam":"neutral","color":{"hue":0.33,"saturation":0.75,"lightness":0.5}}}
+    @teamConfigs
+
+  buildSpriteSheetsForThangType: (thangType) ->
+    @grabThangTypeTeams() unless @thangTypeTeams
+    for team in @thangTypeTeams[thangType.get('original')] ? [null]
+      spriteOptions = {resolutionFactor: 4, async: true}
+      if thangType.get('kind') is 'Floor'
+        spriteOptions.resolutionFactor = 2
+      if team and color = @teamConfigs[team]?.color
+        spriteOptions.colorConfig = team: color
+      @buildSpriteSheet thangType, spriteOptions
+
+  buildSpriteSheet: (thangType, options) ->
+    if thangType.get('name') is 'Wizard'
+      options.colorConfig = me.get('wizard')?.colorConfig or {}
+    building = thangType.buildSpriteSheet options
+    return unless building
+    #console.log 'Building:', thangType.get('name'), options
+    t0 = new Date()
+    @spriteSheetsToBuild += 1
+    thangType.once 'build-complete', =>
+      @spriteSheetsBuilt += 1
+      @notifyProgress()
+      console.log "Built", thangType.get('name'), 'after', ((new Date()) - t0), 'ms'
 
   # World init
 
@@ -133,44 +183,6 @@ module.exports = class LevelLoader extends CocoClass
     @world = new World @level.get('name')
     serializedLevel = @level.serialize(@supermodel)
     @world.loadFromLevel serializedLevel, false
-    @buildSpriteSheets()
-
-  buildSpriteSheets: ->
-    return if @headless
-    thangTypes = {}
-    thangTypes[tt.get('name')] = tt for tt in @supermodel.getModels(ThangType)
-
-    colorConfigs = @world.getTeamColors()
-
-    thangsProduced = {}
-
-    for thang in @world.thangs
-      continue unless thang.spriteName
-      thangType = thangTypes[thang.spriteName]
-      options = thang.getSpriteOptions(colorConfigs)
-      options.async = true
-      if thangType.get('kind') is 'Floor'
-        options.resolutionFactor = 2
-      thangsProduced[thang.spriteName] = true
-      @buildSpriteSheet(thangType, options)
-
-    for thangName, thangType of thangTypes
-      continue if thangsProduced[thangName]
-      thangType.spriteOptions = {resolutionFactor: 4, async: true}
-      if thangType.get('kind') is 'Floor'
-        thangType.spriteOptions.resolutionFactor = 2
-      @buildSpriteSheet(thangType, thangType.spriteOptions)
-
-  buildSpriteSheet: (thangType, options) ->
-    if thangType.get('name') is 'Wizard'
-      options.colorConfig = me.get('wizard')?.colorConfig or {}
-    building = thangType.buildSpriteSheet options
-    return unless building
-    console.log 'Building:', thangType.get('name'), options
-    @spriteSheetsToBuild += 1
-    thangType.once 'build-complete', =>
-      @spriteSheetsBuilt += 1
-      @notifyProgress()
 
   # Initial Sound Loading
 

@@ -35,6 +35,7 @@ module.exports = class ArticleEditView extends View
     data = $.extend(true, {}, @article.attributes)
     options =
       data: data
+      filePath: "db/thang.type/#{@article.get('original')}"
       schema: Article.schema.attributes
       callbacks:
         change: @pushChangesToPreview
@@ -58,7 +59,7 @@ module.exports = class ArticleEditView extends View
     context
 
   openPreview: =>
-    @preview = window.open('http://localhost:3000/editor/article/x/preview', 'preview', 'height=800,width=600')
+    @preview = window.open('/editor/article/x/preview', 'preview', 'height=800,width=600')
     @preview.focus() if window.focus
     @preview.onload = => @pushChangesToPreview()
     return false

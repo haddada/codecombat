@@ -74,13 +74,13 @@ class AudioPlayer extends CocoClass
     filename = "/file/interface/#{name}#{@ext}"
     if filename of cache and createjs.Sound.loadComplete filename
       @playSound name, volume
-      createjs.Sound.play name
     else
       @preloadInterfaceSounds [name] unless filename of cache
       @soundsToPlayWhenLoaded[name] = volume
 
-  playSound: (name, volume=1) ->
-    createjs.Sound.play name, {volume: (me.get('volume') ? 1) * volume}
+  playSound: (name, volume=1, delay=0) ->
+    instance = createjs.Sound.play name, {volume: (me.get('volume') ? 1) * volume, delay: delay}
+    instance
 
 #  # TODO: load Interface sounds somehow, somewhere, somewhen
 

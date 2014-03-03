@@ -27,7 +27,7 @@ LevelHandler = class LevelHandler extends Handler
   getByRelationship: (req, res, args...) ->
     return @getSession(req, res, args[0]) if args[1] is 'session'
     return @getLeaderboard(req, res, args[0]) if args[1] is 'leaderboard'
-    return @getAllSessions(req, res, args[0]) if args[1] is 'all_sessions'
+    return @getMySessions(req, res, args[0]) if args[1] is 'my_sessions'
     return @getFeedback(req, res, args[0]) if args[1] is 'feedback'
     return @sendNotFoundError(res)
 
@@ -39,6 +39,7 @@ LevelHandler = class LevelHandler extends Handler
       callback err, level
 
   getSession: (req, res, id) ->
+    return @sendNotFoundError(res) unless req.user
     @fetchLevelByIDAndHandleErrors id, req, res, (err, level) =>
       sessionQuery =
         level:
@@ -85,26 +86,15 @@ LevelHandler = class LevelHandler extends Handler
       # associated with the handler, because the handler might return a different type
       # of model, like in this case. Refactor to move that logic to the model instead.
 
-  getAllSessions: (req, res, id) ->
+  getMySessions: (req, res, id) ->
     @fetchLevelByIDAndHandleErrors id, req, res, (err, level) =>
       sessionQuery =
         level:
           original: level.original.toString()
           majorVersion: level.version.major
-        submitted: true
+        creator: req.user._id+''
 
-      propertiesToReturn = [
-        '_id'
-        'totalScore'
-        'submitted'
-        'team'
-        'creatorName'
-      ]
-
-      query = Session
-        .find(sessionQuery)
-        .select(propertiesToReturn.join ' ')
-
+      query = Session.find(sessionQuery)
       query.exec (err, results) =>
         if err then @sendDatabaseError(res, err) else @sendSuccess res, results
 
@@ -150,6 +140,7 @@ LevelHandler = class LevelHandler extends Handler
     req.query.limit = parseInt(req.query.limit) ? 20
 
   getFeedback: (req, res, id) ->
+    return @sendNotFoundError(res) unless req.user
     @fetchLevelByIDAndHandleErrors id, req, res, (err, level) =>
       feedbackQuery =
         creator: mongoose.Types.ObjectId(req.user.id.toString())
